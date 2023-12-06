@@ -4,15 +4,9 @@ import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.core.math.FXGLMath;
 import com.almasb.fxgl.entity.Entity;
-import com.almasb.fxgl.input.Input;
-import com.almasb.fxgl.input.MouseEventData;
 import com.almasb.fxgl.input.UserAction;
-import javafx.beans.property.Property;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.effect.Light;
 import javafx.scene.input.MouseButton;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -55,11 +49,13 @@ public class DropApp extends GameApplication {
     protected void initGame() {
         start = 50;
         spawnSnake();
+        spawnAI();
 
-        // creates a timer that runs spawnDroplet() every second
+        // creates a timer that runs spawnFood() every second
         run(this::spawnFood, Duration.seconds(1));
 
     }
+
 
     @Override
     protected void initInput() {
@@ -79,13 +75,13 @@ public class DropApp extends GameApplication {
     @Override
     protected void initPhysics() {
 
-        onCollisionBegin(Type.SNAKE, Type.FOOD, (snake, droplet) -> {
+        onCollisionBegin(Type.SNAKEHEAD, Type.FOOD, (snake, food) -> {
 
             count++;
 
 
             // remove the collided droplet from the game
-            droplet.removeFromWorld();
+            food.removeFromWorld();
 
             // play a sound effect located in /resources/assets/sounds/
             play("drop.wav");
@@ -99,7 +95,7 @@ public class DropApp extends GameApplication {
                 .multiplyColor(Color.GREEN);
 
         Entity snake = entityBuilder()
-                .type(Type.FOLLOWER)
+                .type(Type.SNAKEBODY)
                 .at(x, y)
                 .viewWithBBox(t)
                 .collidable()
@@ -162,7 +158,7 @@ public class DropApp extends GameApplication {
                 .multiplyColor(Color.RED);
 
         Entity snake = entityBuilder()
-                .type(Type.SNAKE)
+                .type(Type.SNAKEHEAD)
                 .at(FXGLMath.random(0, getAppWidth()), FXGLMath.random(0, getAppHeight()))
                 .viewWithBBox(t)
                 .collidable()
@@ -186,7 +182,8 @@ public class DropApp extends GameApplication {
                 .buildAndAttach();
     }
 
-    public enum Type {
-        FOOD, SNAKE, FOLLOWER
+
+    private void spawnAI() {
+
     }
 }
