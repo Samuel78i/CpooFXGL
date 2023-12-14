@@ -4,7 +4,7 @@ plugins {
 }
 
 application {
-    mainModule = 'drop.main'
+    mainModule = 'SlitherApp.main'
 }
 
 repositories {
@@ -24,4 +24,4 @@ javafx {
     modules = [ 'javafx.controls', 'javafx.graphics', 'javafx.fxml', 'javafx.media' ]
 }
 
-mainClassName = 'com.almasb.fxglgames.drop.DropApp'
+mainClassName = 'com.almasb.fxglgames.drop.SlitherApp'
