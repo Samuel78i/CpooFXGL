@@ -4,11 +4,11 @@ import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
 import com.almasb.fxgl.core.math.FXGLMath;
 import com.almasb.fxgl.entity.Entity;
-import com.almasb.fxgl.input.UserAction;
 import com.almasb.fxglgames.drop.components.SnakeComponent;
+import com.almasb.fxglgames.drop.components.UserSnakeMovementComponents;
+import com.almasb.fxglgames.drop.components.ai.AIMovementComponent;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.input.MouseButton;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
@@ -70,6 +70,29 @@ public class SlitherApp extends GameApplication {
             // play a sound effect located in /resources/assets/sounds/
             play("drop.wav");
         });
+
+    onCollisionBegin(Type.SNAKEHEAD, Type.SNAKEHEAD, (snake1, snake2) -> {
+            snake1.getComponent(SnakeComponent.class).death();
+            snake2.getComponent(SnakeComponent.class).death();
+
+            // remove the collided food from the game
+            snake2.removeFromWorld();
+            snake1.removeFromWorld();
+
+            // play a sound effect located in /resources/assets/sounds/
+            play("drop.wav");
+        });
+
+        onCollisionBegin(Type.SNAKEHEAD, Type.SNAKEBODY, (snake, body) -> {
+            if(!snake.getComponent(UserSnakeMovementComponents.class).getBodyParts().contains(body)) {
+                snake.getComponent(SnakeComponent.class).death();
+
+                // remove the collided food from the game
+                snake.removeFromWorld();
+
+                // play a sound effect located in /resources/assets/sounds/
+                play("drop.wav");
+            }});
     }
 
 
@@ -78,12 +101,18 @@ public class SlitherApp extends GameApplication {
                 .subTexture(new Rectangle2D(0, 0, 7, 14))
                 .multiplyColor(Color.RED);
 
+        SnakeComponent snakeComponent = new SnakeComponent();
+        UserSnakeMovementComponents userSnakeMovementComponents = new UserSnakeMovementComponents();
+        snakeComponent.setUserSnakeMovementComponents(userSnakeMovementComponents);
+        userSnakeMovementComponents.setSnakeComponent(snakeComponent);
+
         Entity snake = entityBuilder()
                 .type(Type.SNAKEHEAD)
                 .at(FXGLMath.random(0, getAppWidth()), FXGLMath.random(0, getAppHeight()))
                 .viewWithBBox(t)
                 .collidable()
-                .with(new SnakeComponent())
+                .with(snakeComponent)
+                .with(userSnakeMovementComponents)
                 .buildAndAttach();
 
         snakes.add(snake);
@@ -91,7 +120,7 @@ public class SlitherApp extends GameApplication {
         Point2D vectorToMouse = getInput().getMousePositionWorld().subtract(position);
 
         snake.rotateToVector(vectorToMouse);
-        snake.getComponent(SnakeComponent.class).setLastVector(vectorToMouse);
+        snake.getComponent(UserSnakeMovementComponents.class).setLastVector(vectorToMouse);
     }
 
     private void spawnFood() {
@@ -105,6 +134,18 @@ public class SlitherApp extends GameApplication {
 
 
     private void spawnAI() {
+        var t = texture("snake.png")
+                .subTexture(new Rectangle2D(0, 0, 7, 14))
+                .multiplyColor(Color.BLUE);
 
+        Entity snake = entityBuilder()
+                .type(Type.SNAKEHEAD)
+                .at(FXGLMath.random(0, getAppWidth()), FXGLMath.random(0, getAppHeight()))
+                .viewWithBBox(t)
+                .collidable()
+                .with(new AIMovementComponent())
+                .buildAndAttach();
+
+        snakes.add(snake);
     }
 }

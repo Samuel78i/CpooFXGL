@@ -7,59 +7,26 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.paint.Color;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.almasb.fxgl.dsl.FXGL.*;
+import static com.almasb.fxgl.dsl.FXGL.entityBuilder;
+import static com.almasb.fxgl.dsl.FXGL.texture;
 
 public class SnakeComponent extends Component {
 
-    List<Entity> bodyParts = new ArrayList<>();
-    int countOfFoodEaten = 0;
-    
-    int countToMakeTheSnakeLonger = 0;
-    int countToMakeTheSnakeLarger = 0;
-    boolean boost = false;
+    private int countOfFoodEaten = 0;
 
-    int start = 50;
+    private int countToMakeTheSnakeLonger = 0;
+    private int countToMakeTheSnakeLarger = 0;
 
-    Point2D lastVector;
+    private int start = 50;
+
+    private double lastX;
+    private double lastY;
+    private Point2D vectorToMouse;
+    private UserSnakeMovementComponents userSnakeMovementComponents;
 
 
     @Override
     public void onUpdate(double tpf) {
-        double lastX = this.getEntity().getX();
-        double lastY = this.getEntity().getY();
-
-        if(boost){
-            this.getEntity().translate(getInput().getMousePositionWorld().subtract(
-                    this.getEntity().getPosition()).normalize().multiply(1.2));
-        }else {
-            this.getEntity().translate(getInput().getMousePositionWorld().subtract(
-                    this.getEntity().getPosition()).normalize().multiply(0.8));
-        }
-        Point2D position = this.getEntity().getPosition();
-        Point2D vectorToMouse = getInput().getMousePositionWorld().subtract(position);
-
-        this.getEntity().rotateToVector(vectorToMouse);
-        lastVector = vectorToMouse;
-
-
-        for (Entity bodyPart : bodyParts) {
-            double tempLastX = bodyPart.getX();
-            double tempLastY = bodyPart.getY();
-            //snakes.get(i).translate(lastX, lastY);
-            bodyPart.setX(lastX);
-            bodyPart.setY(lastY);
-
-            //Point2D temp = bodyPart.getRotation();
-
-            bodyPart.rotateToVector(lastVector);
-
-            lastX = tempLastX;
-            lastY = tempLastY;
-        }
-
         if (countOfFoodEaten > 5) {
             countOfFoodEaten = 0;
             makeTheSnakeLonger(lastX, lastY, vectorToMouse);
@@ -69,7 +36,7 @@ public class SnakeComponent extends Component {
             countToMakeTheSnakeLonger--;
             countToMakeTheSnakeLarger+= 5;
         }else if(countToMakeTheSnakeLarger > 15){
-            makeTheSnakeLarger(lastX, lastY, vectorToMouse);
+            makeTheSnakeLarger();
             countToMakeTheSnakeLarger--;
         } else if (start> 0) {
             makeTheSnakeLonger(lastX, lastY, vectorToMouse);
@@ -78,9 +45,9 @@ public class SnakeComponent extends Component {
 
     }
 
-    private void makeTheSnakeLarger(double lastX, double lastY, Point2D vectorToMouse) {
+    private void makeTheSnakeLarger() {
         this.getEntity().setScaleY(2);
-        for (Entity bodyPart : bodyParts) {
+        for (Entity bodyPart : userSnakeMovementComponents.getBodyParts()) {
             bodyPart.setScaleY(2);
         }
     }
@@ -97,7 +64,7 @@ public class SnakeComponent extends Component {
                 .collidable()
                 .buildAndAttach();
 
-        bodyParts.add(snake);
+        userSnakeMovementComponents.addABodyPart(snake);
         snake.rotateToVector(rotation);
     }
 
@@ -106,7 +73,22 @@ public class SnakeComponent extends Component {
         countToMakeTheSnakeLarger++;
     }
 
-    public void setLastVector(Point2D lastVector) {
-        this.lastVector = lastVector;
+    public void setLastX(double lastX) {
+        this.lastX = lastX;
+    }
+
+    public void setLastY(double lastY) {
+        this.lastY = lastY;
+    }
+
+    public void setVectorToMouse(Point2D vectorToMouse) {
+        this.vectorToMouse = vectorToMouse;
+    }
+
+    public void setUserSnakeMovementComponents(UserSnakeMovementComponents u){
+        userSnakeMovementComponents = u;
+    }
+
+    public void death() {
     }
 }

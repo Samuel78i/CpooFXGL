@@ -11,8 +11,14 @@ import java.util.List;
 import static com.almasb.fxgl.dsl.FXGL.getInput;
 
 public class AIMovementComponent extends Component {
-    private List<Entity> snake = new ArrayList<>();
+    List<Entity> bodyParts = new ArrayList<>();
+    int countOfFoodEaten = 0;
+
+    int countToMakeTheSnakeLonger = 0;
+    int countToMakeTheSnakeLarger = 0;
     private Entity closest;
+    int start = 50;
+
 
     @Override
     public void onUpdate(double tpf) {
@@ -35,5 +41,10 @@ public class AIMovementComponent extends Component {
         }else {
             closest = food;
         }
+    }
+
+    public void aFoodAsBeenEaten(){
+        countOfFoodEaten++;
+        countToMakeTheSnakeLarger++;
     }
 }
