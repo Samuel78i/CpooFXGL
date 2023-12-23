@@ -2,57 +2,110 @@ package com.almasb.fxglgames.drop.components;
 
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
+import com.almasb.fxgl.entity.components.ViewComponent;
+import com.almasb.fxgl.input.Input;
+import com.almasb.fxgl.physics.BoundingShape;
+import com.almasb.fxgl.physics.HitBox;
 import com.almasb.fxglgames.drop.Type;
-import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.almasb.fxgl.dsl.FXGL.entityBuilder;
 import static com.almasb.fxgl.dsl.FXGL.texture;
+import static com.almasb.fxgl.dsl.FXGLForKtKt.getInput;
 
 public class SnakeComponent extends Component {
-
     private int countOfFoodEaten = 0;
-
     private int countToMakeTheSnakeLonger = 0;
     private int countToMakeTheSnakeLarger = 0;
-
+    private int currentRadius = 5;
     private int start = 50;
-
-    private double lastX;
-    private double lastY;
-    private Point2D vectorToMouse;
-    private UserSnakeMovementComponents userSnakeMovementComponents;
+    private List<Entity> bodyParts = new ArrayList<>();
+    private boolean boost = false;
+    private Input clientInput;
 
 
     @Override
     public void onUpdate(double tpf) {
+
+        double lastX = this.getEntity().getX();
+        double lastY = this.getEntity().getY();
+
+        if(clientInput == null) {
+            if (boost) {
+                this.getEntity().translate(getInput().getMousePositionWorld().subtract(
+                        this.getEntity().getPosition()).normalize().multiply(1.2));
+            } else {
+                this.getEntity().translate(getInput().getMousePositionWorld().subtract(
+                        this.getEntity().getPosition()).normalize().multiply(0.8));
+            }
+        }else {
+            System.out.println("sal la zone");
+            if (boost) {
+                this.getEntity().translate(clientInput.getMousePositionWorld().subtract(
+                        this.getEntity().getPosition()).normalize().multiply(1.2));
+            } else {
+                this.getEntity().translate(clientInput.getMousePositionWorld().subtract(
+                        this.getEntity().getPosition()).normalize().multiply(0.8));
+            }
+        }
+
+
+        for (Entity bodyPart : bodyParts) {
+            double tempLastX = bodyPart.getX();
+            double tempLastY = bodyPart.getY();
+
+            bodyPart.setX(lastX);
+            bodyPart.setY(lastY);
+
+
+            lastX = tempLastX;
+            lastY = tempLastY;
+        }
         if (countOfFoodEaten > 5) {
             countOfFoodEaten = 0;
-            makeTheSnakeLonger(lastX, lastY, vectorToMouse);
+            makeTheSnakeLonger(lastX, lastY);
             countToMakeTheSnakeLonger = 20;
+            countToMakeTheSnakeLarger++;
         }else if(countToMakeTheSnakeLonger > 0){
-            makeTheSnakeLonger(lastX, lastY, vectorToMouse);
+            makeTheSnakeLonger(lastX, lastY);
             countToMakeTheSnakeLonger--;
-            countToMakeTheSnakeLarger+= 5;
-        }else if(countToMakeTheSnakeLarger > 15){
+        }else if(countToMakeTheSnakeLarger > 6){
+            currentRadius++;
             makeTheSnakeLarger();
-            countToMakeTheSnakeLarger--;
+            countToMakeTheSnakeLarger = 0;
         } else if (start> 0) {
-            makeTheSnakeLonger(lastX, lastY, vectorToMouse);
+            makeTheSnakeLonger(lastX, lastY);
             start--;
         }
 
     }
 
     private void makeTheSnakeLarger() {
-        this.getEntity().setScaleY(2);
-        for (Entity bodyPart : userSnakeMovementComponents.getBodyParts()) {
-            bodyPart.setScaleY(2);
+        ViewComponent viewComponent = this.getEntity().getViewComponent();
+        this.getEntity().getBoundingBoxComponent().clearHitBoxes();
+        this.getEntity().getBoundingBoxComponent().addHitBox(new HitBox(BoundingShape.circle(currentRadius)));
+        for(Node n :viewComponent.getChildren()){
+            if(n instanceof Circle){
+                ((Circle) n).setRadius(currentRadius);
+            }
+        }
+        for (Entity bodyPart : bodyParts) {
+            viewComponent = bodyPart.getViewComponent();
+            for(Node n : viewComponent.getChildren()){
+                if(n instanceof Circle){
+                    ((Circle) n).setRadius(currentRadius);
+                }
+            }
         }
     }
 
-    private void makeTheSnakeLonger(double x, double y, Point2D rotation) {
+    private void makeTheSnakeLonger(double x, double y) {
         var t = texture("snake.png")
                 .subTexture(new Rectangle2D(0, 0, 7, 14))
                 .multiplyColor(Color.GREEN);
@@ -60,12 +113,13 @@ public class SnakeComponent extends Component {
         Entity snake = entityBuilder()
                 .type(Type.SNAKEBODY)
                 .at(x, y)
-                .viewWithBBox(t)
+                .bbox(new HitBox(BoundingShape.circle(currentRadius)))
+                .view(new Circle(5, 5, currentRadius, Color.GREEN))
                 .collidable()
                 .buildAndAttach();
 
-        userSnakeMovementComponents.addABodyPart(snake);
-        snake.rotateToVector(rotation);
+
+        bodyParts.add(snake);
     }
 
     public void aFoodAsBeenEaten(){
@@ -73,22 +127,17 @@ public class SnakeComponent extends Component {
         countToMakeTheSnakeLarger++;
     }
 
-    public void setLastX(double lastX) {
-        this.lastX = lastX;
-    }
-
-    public void setLastY(double lastY) {
-        this.lastY = lastY;
-    }
-
-    public void setVectorToMouse(Point2D vectorToMouse) {
-        this.vectorToMouse = vectorToMouse;
-    }
-
-    public void setUserSnakeMovementComponents(UserSnakeMovementComponents u){
-        userSnakeMovementComponents = u;
-    }
-
     public void death() {
+        for (Entity bodyPart : bodyParts) {
+            bodyPart.removeFromWorld();
+        }
+    }
+
+    public List<Entity> getBodyParts() {
+        return bodyParts;
+    }
+
+    public void setInput(Input clientInput) {
+        this.clientInput = clientInput;
     }
 }
