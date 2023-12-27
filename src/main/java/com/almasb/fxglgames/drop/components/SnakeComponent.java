@@ -7,7 +7,7 @@ import com.almasb.fxgl.input.Input;
 import com.almasb.fxgl.physics.BoundingShape;
 import com.almasb.fxgl.physics.HitBox;
 import com.almasb.fxglgames.drop.Type;
-import javafx.geometry.Rectangle2D;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.almasb.fxgl.dsl.FXGL.entityBuilder;
-import static com.almasb.fxgl.dsl.FXGL.texture;
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getInput;
 
 public class SnakeComponent extends Component {
@@ -28,6 +27,7 @@ public class SnakeComponent extends Component {
     private List<Entity> bodyParts = new ArrayList<>();
     private boolean boost = false;
     private Input clientInput;
+    private Point2D mouse;
 
 
     @Override
@@ -46,12 +46,14 @@ public class SnakeComponent extends Component {
             }
         }else {
             System.out.println("sal la zone");
-            if (boost) {
-                this.getEntity().translate(clientInput.getMousePositionWorld().subtract(
-                        this.getEntity().getPosition()).normalize().multiply(1.2));
-            } else {
-                this.getEntity().translate(clientInput.getMousePositionWorld().subtract(
-                        this.getEntity().getPosition()).normalize().multiply(0.8));
+            if(mouse != null) {
+                if (boost) {
+                    this.getEntity().translate(mouse.subtract(
+                            this.getEntity().getPosition()).normalize().multiply(1.2));
+                } else {
+                    this.getEntity().translate(mouse.subtract(
+                            this.getEntity().getPosition()).normalize().multiply(0.8));
+                }
             }
         }
 
@@ -67,6 +69,8 @@ public class SnakeComponent extends Component {
             lastX = tempLastX;
             lastY = tempLastY;
         }
+
+
         if (countOfFoodEaten > 5) {
             countOfFoodEaten = 0;
             makeTheSnakeLonger(lastX, lastY);
@@ -106,10 +110,6 @@ public class SnakeComponent extends Component {
     }
 
     private void makeTheSnakeLonger(double x, double y) {
-        var t = texture("snake.png")
-                .subTexture(new Rectangle2D(0, 0, 7, 14))
-                .multiplyColor(Color.GREEN);
-
         Entity snake = entityBuilder()
                 .type(Type.SNAKEBODY)
                 .at(x, y)
@@ -124,7 +124,6 @@ public class SnakeComponent extends Component {
 
     public void aFoodAsBeenEaten(){
         countOfFoodEaten++;
-        countToMakeTheSnakeLarger++;
     }
 
     public void death() {
@@ -139,5 +138,9 @@ public class SnakeComponent extends Component {
 
     public void setInput(Input clientInput) {
         this.clientInput = clientInput;
+    }
+
+    public void setMouse(Point2D mousePositionWorld) {
+
     }
 }

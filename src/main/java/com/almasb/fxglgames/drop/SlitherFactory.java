@@ -10,7 +10,6 @@ import com.almasb.fxgl.physics.BoundingShape;
 import com.almasb.fxgl.physics.HitBox;
 import com.almasb.fxglgames.drop.components.SnakeComponent;
 import com.almasb.fxglgames.drop.components.ai.AIMovementComponent;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
@@ -20,11 +19,6 @@ public class SlitherFactory implements EntityFactory {
 
     @Spawns("snake")
     public Entity spawnSnake(SpawnData data) {
-        var t = texture("snake.png")
-                .subTexture(new Rectangle2D(0, 0, 7, 14))
-                .multiplyColor(Color.RED);
-
-
         return entityBuilder()
                 .type(Type.SNAKEHEAD)
                 .at(FXGLMath.random(0, getAppWidth()), FXGLMath.random(0, getAppHeight()))
@@ -34,7 +28,7 @@ public class SlitherFactory implements EntityFactory {
                 .with(new SnakeComponent())
                 //.with(userSnakeMovementComponents)
                 .with(new NetworkComponent())
-                .buildAndAttach();
+                .build();
 
 
     }
@@ -48,18 +42,13 @@ public class SlitherFactory implements EntityFactory {
                 .view(new Circle(6, 6, 6, Color.color(Math.random(), Math.random(), Math.random())))
                 .collidable()
                 .with(new NetworkComponent())
-                .buildAndAttach();
+                .build();
 
     }
 
 
     @Spawns("ai")
     public Entity spawnAI(SpawnData data) {
-        var t = texture("snake.png")
-                .subTexture(new Rectangle2D(0, 0, 7, 14))
-                .multiplyColor(Color.YELLOW);
-
-
         return entityBuilder()
                 .type(Type.SNAKEHEAD)
                 .at(FXGLMath.random(0, getAppWidth()), FXGLMath.random(0, getAppHeight()))
@@ -68,6 +57,6 @@ public class SlitherFactory implements EntityFactory {
                 .collidable()
                 .with(new AIMovementComponent())
                 .with(new NetworkComponent())
-                .buildAndAttach();
+                .build();
     }
 }

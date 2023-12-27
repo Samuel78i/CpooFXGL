@@ -140,7 +140,6 @@ public class AIMovementComponent extends Component {
 
     public void aFoodAsBeenEaten(){
         countOfFoodEaten++;
-        countToMakeTheSnakeLarger++;
         closest= null;
     }
 

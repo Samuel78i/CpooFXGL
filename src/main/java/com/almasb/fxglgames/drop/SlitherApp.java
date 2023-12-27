@@ -10,6 +10,7 @@ import com.almasb.fxgl.multiplayer.MultiplayerService;
 import com.almasb.fxgl.net.Connection;
 import com.almasb.fxglgames.drop.components.SnakeComponent;
 import com.almasb.fxglgames.drop.components.ai.AIMovementComponent;
+import javafx.scene.input.KeyCode;
 import javafx.util.Duration;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
@@ -44,46 +45,42 @@ public class SlitherApp extends GameApplication {
 
     @Override
     protected void initGame() {
-        runOnce(() -> {
-            getDialogService().showConfirmationBox("Online", yes -> {
-                if(yes) {
-                    runOnce(() -> {
-                        getDialogService().showConfirmationBox("Are you the host?", oui -> {
-                            isServer = oui;
+        runOnce(() -> getDialogService().showConfirmationBox("Online", yes -> {
+            if(yes) {
+                runOnce(() -> getDialogService().showConfirmationBox("Are you the host?", oui -> {
+                    isServer = oui;
 
-                            getGameWorld().addEntityFactory(new SlitherFactory());
-                            viewport = getGameScene().getViewport();
-
-                            if (oui) {
-                                var server = getNetService().newTCPServer(444);
-                                server.setOnConnected(conn -> {
-                                    connection = conn;
-
-                                    getExecutor().startAsyncFX(this::onServer);
-                                });
-
-                                server.startAsync();
-
-                            } else {
-                                var client = getNetService().newTCPClient("localhost", 444);
-                                client.setOnConnected(conn -> {
-                                    connection = conn;
-
-                                    getExecutor().startAsyncFX(this::onClient);
-                                });
-
-                                client.connectAsync();
-                            }
-                        });
-                    }, Duration.seconds(0.5));
-                }else{
                     getGameWorld().addEntityFactory(new SlitherFactory());
                     viewport = getGameScene().getViewport();
-                    offline();
-                }
 
-        });
-    }, Duration.seconds(0.5));
+                    if (oui) {
+                        var server = getNetService().newTCPServer(444);
+                        server.setOnConnected(conn -> {
+                            connection = conn;
+
+                            getExecutor().startAsyncFX(this::onServer);
+                        });
+
+                        server.startAsync();
+
+                    } else {
+                        var client = getNetService().newTCPClient("localhost", 444);
+                        client.setOnConnected(conn -> {
+                            connection = conn;
+
+                            getExecutor().startAsyncFX(this::onClient);
+                        });
+
+                        client.connectAsync();
+                    }
+                }), Duration.seconds(0.5));
+            }else{
+                getGameWorld().addEntityFactory(new SlitherFactory());
+                viewport = getGameScene().getViewport();
+                offline();
+            }
+
+    }), Duration.seconds(0.5));
 
     }
 
@@ -112,10 +109,12 @@ public class SlitherApp extends GameApplication {
         player1 = spawn("snake");
         getService(MultiplayerService.class).spawn(connection, player1, "snake");
 
-        player1.getComponent(SnakeComponent.class).setInput(clientInput);
 
         player2 = spawn("snake");
         getService(MultiplayerService.class).spawn(connection, player2, "snake");
+
+        player2.getComponent(SnakeComponent.class).setInput(clientInput);
+
 
         viewport.setBounds(-getAppWidth(), -getAppHeight(), getAppWidth(), getAppHeight());
         //viewport.bindToEntity(player2, (double) getAppWidth() / 2, (double) getAppHeight() / 2);
@@ -124,7 +123,7 @@ public class SlitherApp extends GameApplication {
         run(() -> {
             var food = spawn("food");
             getService(MultiplayerService.class).spawn(connection, food, "food");
-        }, Duration.seconds(0.5));
+        }, Duration.seconds(0.3));
 
         getService(MultiplayerService.class).addInputReplicationReceiver(connection, clientInput);
 
@@ -144,7 +143,7 @@ public class SlitherApp extends GameApplication {
 
         run(() -> {
             spawn("food");
-        }, Duration.seconds(0.5));
+        }, Duration.seconds(0.3));
 
         initPhysics();
     }
@@ -154,7 +153,7 @@ public class SlitherApp extends GameApplication {
 
         clientInput = new Input();
 
-
+        onKeyBuilder(clientInput, KeyCode.W).onAction(() -> player1.getComponent(SnakeComponent.class).setMouse(clientInput.getMousePositionWorld()));
 
 /*        getInput().addAction(new UserAction("boost") {
             @Override
@@ -210,6 +209,7 @@ public class SlitherApp extends GameApplication {
 //            // play a sound effect located in /resources/assets/sounds/
 //            play("drop.wav");
 //        });
+
 
         onCollisionBegin(Type.SNAKEHEAD, Type.SNAKEBODY, (snake, body) -> {
             if(snake.hasComponent(AIMovementComponent.class)){
