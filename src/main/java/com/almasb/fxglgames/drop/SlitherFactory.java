@@ -37,7 +37,7 @@ public class SlitherFactory implements EntityFactory {
     public Entity spawnFood(SpawnData data) {
         return entityBuilder()
                 .type(Type.FOOD)
-                .at(FXGLMath.random(-getAppWidth()+20, getAppWidth() - 20), FXGLMath.random(-getAppHeight()+20, getAppHeight() - 20))
+                .at(data.getX(), data.getY())
                 .bbox(new HitBox(BoundingShape.circle(6)))
                 .view(new Circle(6, 6, 6, Color.color(Math.random(), Math.random(), Math.random())))
                 .collidable()
