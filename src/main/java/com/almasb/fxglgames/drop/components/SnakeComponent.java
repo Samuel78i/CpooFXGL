@@ -7,6 +7,7 @@ import com.almasb.fxgl.input.Input;
 import com.almasb.fxgl.physics.BoundingShape;
 import com.almasb.fxgl.physics.HitBox;
 import com.almasb.fxglgames.drop.Type;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -30,7 +31,14 @@ public class SnakeComponent extends Component {
     private int start = 50;
     private List<Entity> bodyParts = new ArrayList<>();
     private boolean boost = false;
-    private Input clientInput;
+    private boolean keyboard = false;
+    private boolean up, left, right, down;
+    private boolean cameraXHasBeenChanged;
+    private boolean cameraYHasBeenChanged;
+    private int countForCameraX = 0;
+    private int countForCameraY = 0;
+
+
 
     public SnakeComponent() {
         this.id = UUID.randomUUID();
@@ -46,8 +54,21 @@ public class SnakeComponent extends Component {
         double lastX = this.getEntity().getX();
         double lastY = this.getEntity().getY();
 
-
-        if (clientInput == null) {
+        if(keyboard) {
+            if (up) {
+                this.getEntity().translate(new Point2D(this.getEntity().getX(), this.getEntity().getY() - 50).subtract(
+                        this.getEntity().getPosition()).normalize().multiply(0.8));
+            } else if (left) {
+                this.getEntity().translate(new Point2D(this.getEntity().getX() - 50, this.getEntity().getY()).subtract(
+                        this.getEntity().getPosition()).normalize().multiply(0.8));
+            } else if (right) {
+                this.getEntity().translate(new Point2D(this.getEntity().getX() + 50, this.getEntity().getY()).subtract(
+                        this.getEntity().getPosition()).normalize().multiply(0.8));
+            } else if (down) {
+                this.getEntity().translate(new Point2D(this.getEntity().getX(), this.getEntity().getY() + 50).subtract(
+                        this.getEntity().getPosition()).normalize().multiply(0.8));
+            }
+        }else {
             if (boost) {
                 countToMakeTheSnakeShorter++;
                 if (countToMakeTheSnakeShorter > 20) {
@@ -60,8 +81,6 @@ public class SnakeComponent extends Component {
                 this.getEntity().translate(getInput().getMousePositionWorld().subtract(
                         this.getEntity().getPosition()).normalize().multiply(0.8));
             }
-        } else {
-            //TODO
         }
 
         moveBodyParts(lastX, lastY);
@@ -154,10 +173,6 @@ public class SnakeComponent extends Component {
         }
     }
 
-    public void setInput(Input clientInput) {
-        this.clientInput = clientInput;
-    }
-
     public void setBoost(boolean b) {
         boost = b;
         currentRadius = boost ? (int) (currentRadius / 1.25) : (int) (currentRadius * 1.25);
@@ -166,5 +181,69 @@ public class SnakeComponent extends Component {
 
     public List<Entity> getBodyPart() {
         return bodyParts;
+    }
+
+    public void up() {
+        up = true;
+        down = false;
+        left = false;
+        right = false;
+    }
+
+    public void down() {
+        up = false;
+        down = true;
+        left = false;
+        right = false;
+    }
+
+    public void left() {
+        up = false;
+        down = false;
+        left = true;
+        right = false;
+    }
+
+    public void right() {
+        up = false;
+        down = false;
+        left = false;
+        right = true;
+    }
+
+    public boolean isCameraXHasBeenChanged() {
+        return cameraXHasBeenChanged;
+    }
+
+    public void setCameraXHasBeenChanged(boolean cameraXHasBeenChanged) {
+        this.cameraXHasBeenChanged = cameraXHasBeenChanged;
+    }
+
+    public boolean isCameraYHasBeenChanged() {
+        return cameraYHasBeenChanged;
+    }
+
+    public void setCameraYHasBeenChanged(boolean cameraYHasBeenChanged) {
+        this.cameraYHasBeenChanged = cameraYHasBeenChanged;
+    }
+
+    public int getCountForCameraX() {
+        return countForCameraX;
+    }
+
+    public void setCountForCameraX(int countForCameraX) {
+        this.countForCameraX = countForCameraX;
+    }
+
+    public int getCountForCameraY() {
+        return countForCameraY;
+    }
+
+    public void setCountForCameraY(int countForCameraY) {
+        this.countForCameraY = countForCameraY;
+    }
+
+    public void setKeyboard() {
+        keyboard = true;
     }
 }

@@ -12,9 +12,12 @@ import com.almasb.fxgl.multiplayer.MultiplayerService;
 import com.almasb.fxgl.net.Connection;
 import com.almasb.fxglgames.drop.components.SnakeComponent;
 import com.almasb.fxglgames.drop.components.ai.AIMovementComponent;
+import javafx.scene.Camera;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.util.Duration;
 
+import java.util.Arrays;
 import java.util.UUID;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
@@ -27,11 +30,9 @@ public class SlitherApp extends GameApplication {
     private Entity player2;
     private Viewport viewport;
     private boolean isServer;
-    private boolean online;
+    private boolean online = true;
     private Connection<Bundle> connection;
-
     private Input clientInput;
-
 
     public static void main(String[] args) {
         launch(args);
@@ -67,15 +68,17 @@ public class SlitherApp extends GameApplication {
                             getExecutor().startAsyncFX(this::onServer);
                         });
 
+
                         server.startAsync();
 
                     } else {
                         var client = getNetService().newTCPClient("localhost", 444);
-                        client.setOnConnected(conn -> {
-                            connection = conn;
+                        client.setOnConnected(con -> {
+                            connection = con;
 
                             getExecutor().startAsyncFX(this::onClient);
                         });
+
 
                         client.connectAsync();
                     }
@@ -93,21 +96,35 @@ public class SlitherApp extends GameApplication {
 
     private void onClient() {
         System.out.println("CLIENT");
-        online = true;
         player1 = new Entity();
 
         viewport.setBounds(-getAppWidth(), -getAppHeight(), getAppWidth(), getAppHeight());
-        viewport.setX(player1.getX());
-        viewport.setY(player1.getY());
+        viewport.setX(-getAppWidth());
+        viewport.setY(-getAppHeight());
         viewport.setLazy(true);
 
         getService(MultiplayerService.class).addEntityReplicationReceiver(connection, getGameWorld());
         getService(MultiplayerService.class).addInputReplicationSender(connection, getInput());
+
+        connection.addMessageHandler((conn, message) -> {
+            if(message != null) {
+                Double cameraX = message.get("cameraX");
+                Double cameraY = message.get("cameraY");
+
+                if (cameraX != null) {
+                    viewport.setX(cameraX);
+                }
+
+                if (cameraY != null) {
+                    viewport.setY(cameraY);
+                }
+            }
+        });
+
     }
 
     private void onServer() {
         System.out.println("SERVER");
-        online = true;
         var ai1 = spawn("ai");
         getService(MultiplayerService.class).spawn(connection, ai1, "ai");
 
@@ -117,19 +134,21 @@ public class SlitherApp extends GameApplication {
         var ai3 = spawn("ai");
         getService(MultiplayerService.class).spawn(connection, ai3, "ai");
 
+        spawnWalls();
 
-        player1 = spawn("snake");
+
+        player1 = spawn("snake", 200, 200);
         getService(MultiplayerService.class).spawn(connection, player1, "snake");
 
-        player1.getComponent(SnakeComponent.class).setInput(clientInput);
-
-        player2 = spawn("snake");
+        player2 = spawn("snake", -200, -200);
         getService(MultiplayerService.class).spawn(connection, player2, "snake");
+
+        player2.getComponent(SnakeComponent.class).setKeyboard();
 
 
         viewport.setBounds(-getAppWidth(), -getAppHeight(), getAppWidth(), getAppHeight());
-        viewport.setX(player2.getX());
-        viewport.setY(player2.getY());
+        viewport.setX(0);
+        viewport.setY(0);
         viewport.setLazy(true);
 
         run(() -> {
@@ -140,48 +159,85 @@ public class SlitherApp extends GameApplication {
         getService(MultiplayerService.class).addInputReplicationReceiver(connection, clientInput);
 
         initPhysics();
-        initInput();
     }
 
 
     private void offline() {
         player1 = spawn("snake");
-//        spawn("ai");
-//        spawn("ai");
-//        spawn("ai");
+        online = false;
+        spawn("ai");
+        spawn("ai");
+        spawn("ai");
+        spawnWalls();
+
 
         viewport.setBounds(-getAppWidth(), -getAppHeight(), getAppWidth(), getAppHeight());
         viewport.bindToEntity(player1, (double) getAppWidth() / 2, (double) getAppHeight() / 2);
         viewport.setLazy(true);
 
-        run(() -> {
-            spawn("food", FXGLMath.random(-getAppWidth() + 10, getAppWidth() - 10), FXGLMath.random(-getAppHeight() + 10, getAppHeight() - 10));
-        }, Duration.seconds(0.3));
+        run(() -> spawn("food", FXGLMath.random(-getAppWidth() + 10, getAppWidth() - 10), FXGLMath.random(-getAppHeight() + 10, getAppHeight() - 10)), Duration.seconds(0.3));
 
         initPhysics();
-        initInput();
+
+        getInput().addAction(new UserAction("boost") {
+            @Override
+            protected void onActionBegin() {
+                player1.getComponent(SnakeComponent.class).setBoost(true);
+            }
+
+            @Override
+            protected void onActionEnd() {
+                player1.getComponent(SnakeComponent.class).setBoost(false);
+            }
+        }, MouseButton.PRIMARY);
+
     }
 
+    private void spawnWalls() {
+        Entity wallWidth7 = spawn("wallWidth", -getAppWidth(), -getAppHeight());
+        Entity wallWidth6 = spawn("wallWidth", getAppWidth() - 5, -getAppHeight());
+        Entity wallWidth5 = spawn("wallWidth", -getAppWidth(), -((double) getAppHeight() / 2));
+        Entity wallWidth4 = spawn("wallWidth", getAppWidth() - 5, -((double) getAppHeight() / 2));
+
+        Entity wallWidth3 = spawn("wallWidth", -getAppWidth(), 0);
+        Entity wallWidth2 = spawn("wallWidth", getAppWidth() - 5, 0);
+        Entity wallWidth1 = spawn("wallWidth", -getAppWidth(), (double) getAppHeight() / 2);
+        Entity wallWidth = spawn("wallWidth", getAppWidth() - 5, (double) getAppHeight() / 2);
+
+
+        Entity wallHeight7 = spawn("wallHeight", -getAppWidth(), -getAppHeight());
+        Entity wallHeight6 = spawn("wallHeight", -getAppWidth(), getAppHeight() - 5);
+        Entity wallHeight5 = spawn("wallHeight", -(double) getAppWidth() / 2, -getAppHeight());
+        Entity wallHeight4 = spawn("wallHeight", -(double) getAppWidth() / 2, getAppHeight() - 5);
+
+        Entity wallHeight3 = spawn("wallHeight", 0, -getAppHeight());
+        Entity wallHeight2 = spawn("wallHeight", 0, getAppHeight() - 5);
+        Entity wallHeight1 = spawn("wallHeight", (double) getAppWidth() / 2, -getAppHeight());
+        Entity wallHeight = spawn("wallHeight", (double) getAppWidth() / 2, getAppHeight() - 5);
+
+        if(online){
+            for (Entity entity : Arrays.asList(wallWidth, wallWidth1, wallWidth2, wallWidth3, wallWidth4, wallWidth5, wallWidth6, wallWidth7)) {
+                getService(MultiplayerService.class).spawn(connection, entity, "wallWidth");
+            }
+            for (Entity entity : Arrays.asList(wallHeight, wallHeight1, wallHeight2, wallHeight3, wallHeight4, wallHeight5, wallHeight6, wallHeight7)) {
+                getService(MultiplayerService.class).spawn(connection, entity, "wallHeight");
+            }
+        }
+    }
+
+    @Override
     protected void initInput() {
 
         clientInput = new Input();
 
-        //onKeyBuilder(clientInput, KeyCode.W).onAction(() -> player1.getComponent(SnakeComponent.class).setMouse(clientInput.getMousePositionWorld()));
-
-
-//        if (!online) {
-//            getInput().addAction(new UserAction("boost") {
-//                @Override
-//                protected void onActionBegin() {
-//                    player1.getComponent(SnakeComponent.class).setBoost(true);
-//                }
-//
-//                @Override
-//                protected void onActionEnd() {
-//                    player1.getComponent(SnakeComponent.class).setBoost(false);
-//                }
-//            }, MouseButton.PRIMARY);
-//        }
+        onKeyBuilder(clientInput, KeyCode.Z)
+                .onAction(() -> player2.getComponent(SnakeComponent.class).up());
+        onKeyBuilder(clientInput, KeyCode.S)
+                .onAction(() -> player2.getComponent(SnakeComponent.class).down());
+        onKeyBuilder(clientInput, KeyCode.Q)
+                .onAction(() -> player2.getComponent(SnakeComponent.class).left());
+        onKeyBuilder(clientInput, KeyCode.D)
+                .onAction(() -> player2.getComponent(SnakeComponent.class).right());
     }
 
 
@@ -190,16 +246,16 @@ public class SlitherApp extends GameApplication {
         if (online) {
             if (isServer) {
                 clientInput.update(tpf);
-//                if (player2 != null) {
-//                    viewport.setX(player2.getX());
-//                    viewport.setY(player2.getY());
-//                }
+                if (player1 != null && player1.isActive()) {
+                    handleCameraChange(player1);
+                }
+                if (player2 != null && player2.isActive()) {
+                    handleCameraChange(player2);
+                }
             } else {
-//                if (player1 != null) {
-//                    viewport.setX(player1.getX());
-//                    viewport.setY(player1.getY());
-//                }
-//
+                if (player2 != null && player2.isActive()) {
+                    handleCameraChange(player2);
+                }
             }
         }
     }
@@ -247,8 +303,11 @@ public class SlitherApp extends GameApplication {
             if (!snakeId.equals(bodySnakeId)) {
                 int count = 0;
                 for (Entity bodyParts : snakeComponent.getBodyPart()) {
-                    if (count > 3) {
-                        spawn("food", bodyParts.getPosition());
+                    if (count > 10) {
+                        var food = spawn("food", bodyParts.getPosition());
+                        if(online){
+                            //getService(MultiplayerService.class).spawn(connection, food, "food");
+                        }
                     }
                     count++;
                 }
@@ -260,4 +319,76 @@ public class SlitherApp extends GameApplication {
             }
         });
     }
+
+
+    private void handleCameraChange(Entity player) {
+        SnakeComponent component = player.getComponent(SnakeComponent.class);
+        if (component.isCameraXHasBeenChanged()) {
+            component.setCountForCameraX(component.getCountForCameraX() + 1);
+            if (component.getCountForCameraX() > 400) {
+                component.setCountForCameraX(0);
+                component.setCameraXHasBeenChanged(false);
+            }
+        } else if (component.isCameraYHasBeenChanged()) {
+            component.setCountForCameraY(component.getCountForCameraY() + 1);
+            if (component.getCountForCameraY() > 400) {
+                component.setCountForCameraY(0);
+                component.setCameraYHasBeenChanged(false);
+            }
+        } else {
+            handleOutsideTheCamera(player);
+        }
+    }
+
+    private void handleOutsideTheCamera(Entity player) {
+        if (!(player.getX() > getAppWidth() - 20 || player.getX() < -getAppWidth() + 20)) {
+            if (player.getX() < 10 && player.getX() > -10) {
+                if (player.getX() < 0) {
+                    if (player == player2) {
+                        var data = new Bundle("");
+                        data.put("cameraX", 0.0);
+                        connection.send(data);
+                    } else {
+                        viewport.setX(0);
+                    }
+                } else {
+                    if (player == player2) {
+                        var data = new Bundle("");
+                        data.put("cameraX", (double) -getAppWidth());
+                        connection.send(data);
+                    } else {
+                        viewport.setX(-getAppWidth());
+                    }
+                }
+                player.getComponent(SnakeComponent.class).setCameraXHasBeenChanged(true);
+            }
+        }
+
+
+        if (!(player.getY() > getAppHeight() - 20 || player.getY() < -getAppHeight() + 20)) {
+            if (player.getY() < 10 && player.getY() > -10) {
+                if (player.getY() < 0) {
+                    if (player == player2) {
+                        var data = new Bundle("");
+                        data.put("cameraY", 0.0);
+                        connection.send(data);
+                    } else {
+                        viewport.setY(0);
+                    }
+                } else {
+                    if (player == player2) {
+                        var data = new Bundle("");
+                        data.put("cameraY", (double) -getAppHeight());
+                        connection.send(data);
+                    } else {
+                        viewport.setY(-getAppHeight());
+                    }
+                }
+                player.getComponent(SnakeComponent.class).setCameraYHasBeenChanged(true);
+            }
+        }
+    }
+
 }
+
+
