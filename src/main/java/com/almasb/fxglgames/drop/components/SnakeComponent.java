@@ -3,7 +3,6 @@ package com.almasb.fxglgames.drop.components;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.entity.components.ViewComponent;
-import com.almasb.fxgl.input.Input;
 import com.almasb.fxgl.physics.BoundingShape;
 import com.almasb.fxgl.physics.HitBox;
 import com.almasb.fxglgames.drop.Type;
@@ -12,8 +11,6 @@ import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -37,6 +34,7 @@ public class SnakeComponent extends Component {
     private boolean cameraYHasBeenChanged;
     private int countForCameraX = 0;
     private int countForCameraY = 0;
+    private final Color color = Color.GREEN;
 
 
 
@@ -83,7 +81,7 @@ public class SnakeComponent extends Component {
             }
         }
 
-        moveBodyParts(lastX, lastY);
+        moveBodyParts(lastX, lastY, color);
     }
 
     private void removeLastBodyPart() {
@@ -95,7 +93,7 @@ public class SnakeComponent extends Component {
         return true;
     }
 
-    protected void moveBodyParts(double lastX, double lastY) {
+    protected void moveBodyParts(double lastX, double lastY, Color color) {
         for (Entity bodyPart : bodyParts) {
             double tempLastX = bodyPart.getX();
             double tempLastY = bodyPart.getY();
@@ -108,25 +106,25 @@ public class SnakeComponent extends Component {
             lastY = tempLastY;
         }
         if (shouldChangeSize())
-            handleSizeChange(lastX, lastY);
+            handleSizeChange(lastX, lastY, color);
 
     }
 
-    protected void handleSizeChange(double pointInitial, double pointNew) {
+    protected void handleSizeChange(double pointInitial, double pointNew, Color color) {
         if (countOfFoodEaten > 5) {
             countOfFoodEaten = 0;
-            makeTheSnakeLonger(pointInitial, pointNew);
+            makeTheSnakeLonger(pointInitial, pointNew, color);
             countToMakeTheSnakeLonger = 20;
             countToMakeTheSnakeLarger++;
         } else if (countToMakeTheSnakeLonger > 0) {
-            makeTheSnakeLonger(pointInitial, pointNew);
+            makeTheSnakeLonger(pointInitial, pointNew, color);
             countToMakeTheSnakeLonger--;
         } else if (countToMakeTheSnakeLarger > 6) {
             currentRadius++;
             changeSnakeRadius();
             countToMakeTheSnakeLarger = 0;
         } else if (start > 0) {
-            makeTheSnakeLonger(pointInitial, pointNew);
+            makeTheSnakeLonger(pointInitial, pointNew, color);
             start--;
         }
     }
@@ -150,12 +148,12 @@ public class SnakeComponent extends Component {
         }
     }
 
-    private void makeTheSnakeLonger(double x, double y) {
+    private void makeTheSnakeLonger(double x, double y, Color color) {
         Entity snake = entityBuilder()
                 .type(Type.SNAKEBODY)
                 .at(x, y)
                 .bbox(new HitBox(BoundingShape.circle(currentRadius)))
-                .view(new Circle(5, 5, currentRadius, Color.GREEN))
+                .view(new Circle(5, 5, currentRadius, color))
                 .collidable()
                 .with("Id", this.id)
                 .buildAndAttach();

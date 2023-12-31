@@ -12,7 +12,6 @@ import com.almasb.fxgl.multiplayer.MultiplayerService;
 import com.almasb.fxgl.net.Connection;
 import com.almasb.fxglgames.drop.components.SnakeComponent;
 import com.almasb.fxglgames.drop.components.ai.AIMovementComponent;
-import javafx.scene.Camera;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.util.Duration;
@@ -21,7 +20,6 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
-import static com.almasb.fxgl.dsl.FXGL.getAppHeight;
 
 
 public class SlitherApp extends GameApplication {
@@ -304,10 +302,7 @@ public class SlitherApp extends GameApplication {
                 int count = 0;
                 for (Entity bodyParts : snakeComponent.getBodyPart()) {
                     if (count > 10) {
-                        var food = spawn("food", bodyParts.getPosition());
-                        if(online){
-                            //getService(MultiplayerService.class).spawn(connection, food, "food");
-                        }
+                        spawn("food", bodyParts.getPosition());
                     }
                     count++;
                 }
