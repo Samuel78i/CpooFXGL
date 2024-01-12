@@ -102,7 +102,7 @@ public class SlitherApp extends GameApplication {
 
 
     /**
-     * If the online mode is enabled and we're on the client side
+     * If the online mode is enabled, and we're on the client side
      */
     private void onClient() {
         System.out.println("CLIENT");
@@ -135,7 +135,7 @@ public class SlitherApp extends GameApplication {
 
 
     /**
-     *  If the online mode is enabled and we're on the client side
+     *  If the online mode is enabled, and we're on the client side
      */
     private void onServer() {
 

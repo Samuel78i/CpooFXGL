@@ -3,7 +3,6 @@ package com.almasb.fxglgames.drop.components;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.entity.component.Component;
 import com.almasb.fxgl.entity.components.ViewComponent;
-import com.almasb.fxgl.input.Input;
 import com.almasb.fxgl.physics.BoundingShape;
 import com.almasb.fxgl.physics.HitBox;
 import com.almasb.fxglgames.drop.Type;
@@ -12,8 +11,6 @@ import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -120,12 +117,10 @@ public class SnakeComponent extends Component {
 
     protected boolean shouldChangeSize(){ return true;}
 
-    private void handleSizeChange(double pointInitial, double pointNew, Color color) {
-
     /**
      *  Check every counter to handle size change and init the snake size with the start int
      */
-    protected void handleSizeChange(double pointInitial, double pointNew) {
+    private void handleSizeChange(double pointInitial, double pointNew, Color color) {
         if (countOfFoodEaten > 5) {
             countOfFoodEaten = 0;
             makeTheSnakeLonger(pointInitial, pointNew, color);
@@ -139,9 +134,8 @@ public class SnakeComponent extends Component {
             changeSnakeRadius();
             countToMakeTheSnakeLarger = 0;
         } else if (start > 0) {
+            //used to init the snake size
             makeTheSnakeLonger(pointInitial, pointNew, color);
-            //use to init the snake size
-            makeTheSnakeLonger(pointInitial, pointNew);
             start--;
         }
     }
@@ -173,7 +167,6 @@ public class SnakeComponent extends Component {
     /**
      *  Adds body parts to the snake to make him longer
      */
-    private void makeTheSnakeLonger(double x, double y) {
     private void makeTheSnakeLonger(double x, double y, Color color) {
         Entity snake = entityBuilder()
                 .type(Type.SNAKEBODY)

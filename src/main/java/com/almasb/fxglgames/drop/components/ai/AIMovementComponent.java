@@ -14,7 +14,7 @@ import java.util.Optional;
  */
 public class AIMovementComponent extends SnakeComponent {
     private Optional<Entity> closestFood = Optional.empty();
-    private final Color color = Color.YELLOW;
+    private final Color color = Color.color(Math.random(), Math.random(), Math.random());
 
     @Override
     public void onUpdate(double tpf) {
