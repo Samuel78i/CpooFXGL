@@ -17,11 +17,17 @@ repositories {
 
 dependencies {
     implementation 'com.github.almasb:fxgl:17.3'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 javafx {
     version = "18"
     modules = [ 'javafx.controls', 'javafx.graphics', 'javafx.fxml', 'javafx.media' ]
+}
+
+test {
+    useJUnitPlatform()
 }
 
 mainClassName = 'com.almasb.fxglgames.drop.SlitherApp'

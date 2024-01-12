@@ -40,8 +40,7 @@ public class SnakeComponent extends Component {
     private boolean cameraYHasBeenChanged;
     private int countForCameraX = 0;
     private int countForCameraY = 0;
-
-
+    private final Color color = Color.GREEN;
 
     /**
      *  The UUID id is used to compare different snake on collision
@@ -61,59 +60,50 @@ public class SnakeComponent extends Component {
      */
     @Override
     public void onUpdate(double tpf) {
-
         double lastX = this.getEntity().getX();
         double lastY = this.getEntity().getY();
 
-        if(keyboard) {
-            if (up) {
-                this.getEntity().translate(new Point2D(this.getEntity().getX(), this.getEntity().getY() - 50).subtract(
-                        this.getEntity().getPosition()).normalize().multiply(0.8));
-            } else if (left) {
-                this.getEntity().translate(new Point2D(this.getEntity().getX() - 50, this.getEntity().getY()).subtract(
-                        this.getEntity().getPosition()).normalize().multiply(0.8));
-            } else if (right) {
-                this.getEntity().translate(new Point2D(this.getEntity().getX() + 50, this.getEntity().getY()).subtract(
-                        this.getEntity().getPosition()).normalize().multiply(0.8));
-            } else if (down) {
-                this.getEntity().translate(new Point2D(this.getEntity().getX(), this.getEntity().getY() + 50).subtract(
-                        this.getEntity().getPosition()).normalize().multiply(0.8));
-            }
-        }else {
-            if (boost) {
-                //Remove body parts while boost
-                countToMakeTheSnakeShorter++;
-                if (countToMakeTheSnakeShorter > 20) {
-                    removeLastBodyPart();
-                    countToMakeTheSnakeShorter = 0;
-                }
-                //Going towards the mouse
-                this.getEntity().translate(getInput().getMousePositionWorld().subtract(
-                        this.getEntity().getPosition()).normalize().multiply(1.2));
-            } else {
-                //Going towards the mouse
-                this.getEntity().translate(getInput().getMousePositionWorld().subtract(
-                        this.getEntity().getPosition()).normalize().multiply(0.8));
-            }
+        if (keyboard) {
+            handleKeyboardMovement();
+        } else {
+            handleMouseMovement();
         }
 
-        moveBodyParts(lastX, lastY);
+        moveBodyParts(lastX, lastY, color);
     }
 
-    private void removeLastBodyPart() {
-        bodyParts.get(bodyParts.size() - 1).removeFromWorld();
-        bodyParts.remove(bodyParts.size() - 1);
+    private void handleKeyboardMovement() {
+        if (up) {
+            this.getEntity().translate(new Point2D(this.getEntity().getX(), this.getEntity().getY() - 50).subtract(
+                    this.getEntity().getPosition()).normalize().multiply(0.8));
+        } else if (left) {
+            this.getEntity().translate(new Point2D(this.getEntity().getX() - 50, this.getEntity().getY()).subtract(
+                    this.getEntity().getPosition()).normalize().multiply(0.8));
+        } else if (right) {
+            this.getEntity().translate(new Point2D(this.getEntity().getX() + 50, this.getEntity().getY()).subtract(
+                    this.getEntity().getPosition()).normalize().multiply(0.8));
+        } else if (down) {
+            this.getEntity().translate(new Point2D(this.getEntity().getX(), this.getEntity().getY() + 50).subtract(
+                    this.getEntity().getPosition()).normalize().multiply(0.8));
+        }
     }
 
-    protected boolean shouldChangeSize() {
-        return true;
+    private void handleMouseMovement() {
+        if (boost) {
+            countToMakeTheSnakeShorter++;
+            if (countToMakeTheSnakeShorter > 20) {
+                removeLastBodyPart();
+                countToMakeTheSnakeShorter = 0;
+            }
+            this.getEntity().translate(getInput().getMousePositionWorld().subtract(
+                    this.getEntity().getPosition()).normalize().multiply(1.2));
+        } else {
+            this.getEntity().translate(getInput().getMousePositionWorld().subtract(
+                    this.getEntity().getPosition()).normalize().multiply(0.8));
+        }
     }
 
-
-    /**
-     *  Move every body parts to were the one in front previously was
-     */
-    protected void moveBodyParts(double lastX, double lastY) {
+    protected void moveBodyParts(double lastX, double lastY, Color color) {
         for (Entity bodyPart : bodyParts) {
             double tempLastX = bodyPart.getX();
             double tempLastY = bodyPart.getY();
@@ -121,15 +111,16 @@ public class SnakeComponent extends Component {
             bodyPart.setX(lastX);
             bodyPart.setY(lastY);
 
-
             lastX = tempLastX;
             lastY = tempLastY;
         }
         if (shouldChangeSize())
-            handleSizeChange(lastX, lastY);
-
+            handleSizeChange(lastX, lastY, color);
     }
 
+    protected boolean shouldChangeSize(){ return true;}
+
+    private void handleSizeChange(double pointInitial, double pointNew, Color color) {
 
     /**
      *  Check every counter to handle size change and init the snake size with the start int
@@ -137,17 +128,18 @@ public class SnakeComponent extends Component {
     protected void handleSizeChange(double pointInitial, double pointNew) {
         if (countOfFoodEaten > 5) {
             countOfFoodEaten = 0;
-            makeTheSnakeLonger(pointInitial, pointNew);
+            makeTheSnakeLonger(pointInitial, pointNew, color);
             countToMakeTheSnakeLonger = 20;
             countToMakeTheSnakeLarger++;
         } else if (countToMakeTheSnakeLonger > 0) {
-            makeTheSnakeLonger(pointInitial, pointNew);
+            makeTheSnakeLonger(pointInitial, pointNew, color);
             countToMakeTheSnakeLonger--;
         } else if (countToMakeTheSnakeLarger > 6) {
             currentRadius++;
             changeSnakeRadius();
             countToMakeTheSnakeLarger = 0;
         } else if (start > 0) {
+            makeTheSnakeLonger(pointInitial, pointNew, color);
             //use to init the snake size
             makeTheSnakeLonger(pointInitial, pointNew);
             start--;
@@ -182,16 +174,22 @@ public class SnakeComponent extends Component {
      *  Adds body parts to the snake to make him longer
      */
     private void makeTheSnakeLonger(double x, double y) {
+    private void makeTheSnakeLonger(double x, double y, Color color) {
         Entity snake = entityBuilder()
                 .type(Type.SNAKEBODY)
                 .at(x, y)
                 .bbox(new HitBox(BoundingShape.circle(currentRadius)))
-                .view(new Circle(5, 5, currentRadius, Color.GREEN))
+                .view(new Circle(5, 5, currentRadius, color))
                 .collidable()
                 .with("Id", this.id)
                 .buildAndAttach();
 
         bodyParts.add(snake);
+    }
+
+    private void removeLastBodyPart() {
+        bodyParts.get(bodyParts.size() - 1).removeFromWorld();
+        bodyParts.remove(bodyParts.size() - 1);
     }
 
     public void aFoodAsBeenEaten() {

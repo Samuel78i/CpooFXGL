@@ -340,12 +340,9 @@ public class SlitherApp extends GameApplication {
                 int count = 0;
                 for (Entity bodyParts : snakeComponent.getBodyPart()) {
                     if (count > 10) {
-                        var food = spawn("food", bodyParts.getPosition());
-                        if(online){
-                            //getService(MultiplayerService.class).spawn(connection, food, "food");
-                        }
-                        count=0;
+                        spawn("food", bodyParts.getPosition());
                     }
+                    count=0;
                     count++;
                 }
 

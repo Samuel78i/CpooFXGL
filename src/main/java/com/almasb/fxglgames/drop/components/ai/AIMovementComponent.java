@@ -5,7 +5,7 @@ import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxglgames.drop.Type;
 import com.almasb.fxglgames.drop.components.SnakeComponent;
 import javafx.geometry.Point2D;
-
+import javafx.scene.paint.Color;
 
 import java.util.Optional;
 
@@ -14,6 +14,7 @@ import java.util.Optional;
  */
 public class AIMovementComponent extends SnakeComponent {
     private Optional<Entity> closestFood = Optional.empty();
+    private final Color color = Color.YELLOW;
 
     @Override
     public void onUpdate(double tpf) {
@@ -27,7 +28,7 @@ public class AIMovementComponent extends SnakeComponent {
             this.getEntity().translate(closestFood.get().getPosition().subtract(
                     this.getEntity().getPosition()).normalize().multiply(0.8));
 
-            moveBodyParts(oldPosition.getX(), oldPosition.getY());
+            moveBodyParts(oldPosition.getX(), oldPosition.getY(), color);
         }
     }
 
