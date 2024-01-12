@@ -21,6 +21,9 @@ import java.util.UUID;
 import static com.almasb.fxgl.dsl.FXGL.entityBuilder;
 import static com.almasb.fxgl.dsl.FXGLForKtKt.getInput;
 
+/**
+ *  Class that handles the snake movement and size growing
+ */
 public class SnakeComponent extends Component {
     private final UUID id;
     protected int countOfFoodEaten = 0;
@@ -40,6 +43,9 @@ public class SnakeComponent extends Component {
 
 
 
+    /**
+     *  The UUID id is used to compare different snake on collision
+     */
     public SnakeComponent() {
         this.id = UUID.randomUUID();
     }
@@ -48,6 +54,11 @@ public class SnakeComponent extends Component {
         return id;
     }
 
+
+    /**
+     *  On every frame, we move the snake towards the mouse or in direction of the key pressed,
+     *  and move every body parts to were the one in front previously was
+     */
     @Override
     public void onUpdate(double tpf) {
 
@@ -70,14 +81,17 @@ public class SnakeComponent extends Component {
             }
         }else {
             if (boost) {
+                //Remove body parts while boost
                 countToMakeTheSnakeShorter++;
                 if (countToMakeTheSnakeShorter > 20) {
                     removeLastBodyPart();
                     countToMakeTheSnakeShorter = 0;
                 }
+                //Going towards the mouse
                 this.getEntity().translate(getInput().getMousePositionWorld().subtract(
                         this.getEntity().getPosition()).normalize().multiply(1.2));
             } else {
+                //Going towards the mouse
                 this.getEntity().translate(getInput().getMousePositionWorld().subtract(
                         this.getEntity().getPosition()).normalize().multiply(0.8));
             }
@@ -95,6 +109,10 @@ public class SnakeComponent extends Component {
         return true;
     }
 
+
+    /**
+     *  Move every body parts to were the one in front previously was
+     */
     protected void moveBodyParts(double lastX, double lastY) {
         for (Entity bodyPart : bodyParts) {
             double tempLastX = bodyPart.getX();
@@ -112,6 +130,10 @@ public class SnakeComponent extends Component {
 
     }
 
+
+    /**
+     *  Check every counter to handle size change and init the snake size with the start int
+     */
     protected void handleSizeChange(double pointInitial, double pointNew) {
         if (countOfFoodEaten > 5) {
             countOfFoodEaten = 0;
@@ -126,11 +148,16 @@ public class SnakeComponent extends Component {
             changeSnakeRadius();
             countToMakeTheSnakeLarger = 0;
         } else if (start > 0) {
+            //use to init the snake size
             makeTheSnakeLonger(pointInitial, pointNew);
             start--;
         }
     }
 
+
+    /**
+     * Change the radius of every body parts of the snake to make him larger
+     */
     private void changeSnakeRadius() {
         ViewComponent viewComponent = this.getEntity().getViewComponent();
         this.getEntity().getBoundingBoxComponent().clearHitBoxes();
@@ -150,6 +177,10 @@ public class SnakeComponent extends Component {
         }
     }
 
+
+    /**
+     *  Adds body parts to the snake to make him longer
+     */
     private void makeTheSnakeLonger(double x, double y) {
         Entity snake = entityBuilder()
                 .type(Type.SNAKEBODY)

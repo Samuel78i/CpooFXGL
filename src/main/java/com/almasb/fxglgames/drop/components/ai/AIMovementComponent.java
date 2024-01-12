@@ -9,6 +9,9 @@ import javafx.geometry.Point2D;
 
 import java.util.Optional;
 
+/**
+ *  Class that handles the AI movement, and uses the same growing technique as the SnakeComponent Class
+ */
 public class AIMovementComponent extends SnakeComponent {
     private Optional<Entity> closestFood = Optional.empty();
 
@@ -18,11 +21,11 @@ public class AIMovementComponent extends SnakeComponent {
     }
 
     private void move() {
-
         Point2D oldPosition = this.getEntity().getPosition();
         FXGL.getGameWorld().getEntitiesByType(Type.FOOD).forEach(this::findTheClosestOne);
         if (closestFood.isPresent() && closestFood.get().isActive()) {
-            this.getEntity().translate(closestFood.get().getPosition().subtract(this.getEntity().getPosition()).normalize().multiply(0.8));
+            this.getEntity().translate(closestFood.get().getPosition().subtract(
+                    this.getEntity().getPosition()).normalize().multiply(0.8));
 
             moveBodyParts(oldPosition.getX(), oldPosition.getY());
         }
@@ -33,6 +36,10 @@ public class AIMovementComponent extends SnakeComponent {
         return closestFood.isPresent();
     }
 
+
+    /**
+     *  For every Food entity in the game, find the closest one to the AI snake
+     */
     private void findTheClosestOne(Entity food) {
         if (closestFood.isPresent() && closestFood.get().isActive()) {
             if (this.getEntity().getPosition().distance(closestFood.get().getPosition()) > this.getEntity().getPosition().distance(food.getPosition())) {
@@ -45,6 +52,7 @@ public class AIMovementComponent extends SnakeComponent {
 
     public void aFoodAsBeenEaten() {
         countOfFoodEaten++;
+        //The closest food as been eaten, so now there is no closest food anymore
         closestFood = Optional.empty();
     }
 

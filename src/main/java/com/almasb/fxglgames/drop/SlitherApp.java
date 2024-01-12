@@ -12,7 +12,6 @@ import com.almasb.fxgl.multiplayer.MultiplayerService;
 import com.almasb.fxgl.net.Connection;
 import com.almasb.fxglgames.drop.components.SnakeComponent;
 import com.almasb.fxglgames.drop.components.ai.AIMovementComponent;
-import javafx.scene.Camera;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.util.Duration;
@@ -24,6 +23,9 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 import static com.almasb.fxgl.dsl.FXGL.getAppHeight;
 
 
+/**
+ * Main Class of our own Slither.io game
+ */
 public class SlitherApp extends GameApplication {
 
     private Entity player1;
@@ -50,6 +52,10 @@ public class SlitherApp extends GameApplication {
 
     }
 
+
+    /**
+     *  Init the game with a dialogue box to enable the online mode if needed
+     */
     @Override
     protected void initGame() {
         runOnce(() -> getDialogService().showConfirmationBox("Online", yes -> {
@@ -94,6 +100,10 @@ public class SlitherApp extends GameApplication {
 
     }
 
+
+    /**
+     * If the online mode is enabled and we're on the client side
+     */
     private void onClient() {
         System.out.println("CLIENT");
         player1 = new Entity();
@@ -123,7 +133,14 @@ public class SlitherApp extends GameApplication {
 
     }
 
+
+    /**
+     *  If the online mode is enabled and we're on the client side
+     */
     private void onServer() {
+
+        //All the getServices() calls here are to replicate the entity to the client
+
         System.out.println("SERVER");
         var ai1 = spawn("ai");
         getService(MultiplayerService.class).spawn(connection, ai1, "ai");
@@ -151,6 +168,7 @@ public class SlitherApp extends GameApplication {
         viewport.setY(0);
         viewport.setLazy(true);
 
+        //Spawn food every 0.3 seconds
         run(() -> {
             var food = spawn("food", FXGLMath.random(-getAppWidth() + 10, getAppWidth() - 10), FXGLMath.random(-getAppHeight() + 10, getAppHeight() - 10));
             getService(MultiplayerService.class).spawn(connection, food, "food");
@@ -161,7 +179,9 @@ public class SlitherApp extends GameApplication {
         initPhysics();
     }
 
-
+    /**
+     *  Offline init of game
+     */
     private void offline() {
         player1 = spawn("snake");
         online = false;
@@ -175,10 +195,13 @@ public class SlitherApp extends GameApplication {
         viewport.bindToEntity(player1, (double) getAppWidth() / 2, (double) getAppHeight() / 2);
         viewport.setLazy(true);
 
+        //Spawn food every 0.3 seconds
         run(() -> spawn("food", FXGLMath.random(-getAppWidth() + 10, getAppWidth() - 10), FXGLMath.random(-getAppHeight() + 10, getAppHeight() - 10)), Duration.seconds(0.3));
 
         initPhysics();
 
+
+        //Boost handling on click
         getInput().addAction(new UserAction("boost") {
             @Override
             protected void onActionBegin() {
@@ -215,6 +238,7 @@ public class SlitherApp extends GameApplication {
         Entity wallHeight1 = spawn("wallHeight", (double) getAppWidth() / 2, -getAppHeight());
         Entity wallHeight = spawn("wallHeight", (double) getAppWidth() / 2, getAppHeight() - 5);
 
+        //replicate all the walls on the client side
         if(online){
             for (Entity entity : Arrays.asList(wallWidth, wallWidth1, wallWidth2, wallWidth3, wallWidth4, wallWidth5, wallWidth6, wallWidth7)) {
                 getService(MultiplayerService.class).spawn(connection, entity, "wallWidth");
@@ -225,6 +249,10 @@ public class SlitherApp extends GameApplication {
         }
     }
 
+
+    /**
+     *  Init input for the second player
+     */
     @Override
     protected void initInput() {
 
@@ -241,6 +269,9 @@ public class SlitherApp extends GameApplication {
     }
 
 
+    /**
+     *  On every frame we verify if the camera needs to change, it's only useful for the online mode
+     */
     @Override
     protected void onUpdate(double tpf) {
         if (online) {
@@ -261,8 +292,10 @@ public class SlitherApp extends GameApplication {
     }
 
 
+    /**
+     *  All collisions init
+     */
     protected void initPhysics() {
-
         onCollisionBegin(Type.SNAKEHEAD, Type.FOOD, (entitySnake, food) -> {
 
             SnakeComponent snakeComponent = entitySnake.hasComponent(AIMovementComponent.class) ?
@@ -293,6 +326,9 @@ public class SlitherApp extends GameApplication {
             // remove the collided food from the game
             snake2.removeFromWorld();
             snake1.removeFromWorld();
+            if(!player1.isActive()){
+                createDialogueBoxToReplay();
+            }
         });
 
         onCollisionBegin(Type.SNAKEHEAD, Type.SNAKEBODY, (entitySnake, body) -> {
@@ -308,6 +344,7 @@ public class SlitherApp extends GameApplication {
                         if(online){
                             //getService(MultiplayerService.class).spawn(connection, food, "food");
                         }
+                        count=0;
                     }
                     count++;
                 }
@@ -316,11 +353,24 @@ public class SlitherApp extends GameApplication {
 
                 // remove the collided food from the game
                 entitySnake.removeFromWorld();
+                if(!player1.isActive()){
+                    createDialogueBoxToReplay();
+                }
             }
         });
     }
 
+    private void createDialogueBoxToReplay() {
+        runOnce(() -> getDialogService().showConfirmationBox("PlayAgain ?", oui -> {
+            player1 = spawn("snake");
+            viewport.bindToEntity(player1, (double) getAppWidth() / 2, (double) getAppHeight() / 2);
+        }), Duration.seconds(0.5));
+    }
 
+
+    /**
+     *  Camera needs to change if the player is going of the screen. Only in the online mode
+     */
     private void handleCameraChange(Entity player) {
         SnakeComponent component = player.getComponent(SnakeComponent.class);
         if (component.isCameraXHasBeenChanged()) {
@@ -340,7 +390,12 @@ public class SlitherApp extends GameApplication {
         }
     }
 
+
+    /**
+     *  Camera needs to change if the player is going of the screen. Only in the online mode
+     */
     private void handleOutsideTheCamera(Entity player) {
+        //the player is going outside the camera on the left or right
         if (!(player.getX() > getAppWidth() - 20 || player.getX() < -getAppWidth() + 20)) {
             if (player.getX() < 10 && player.getX() > -10) {
                 if (player.getX() < 0) {
@@ -364,7 +419,7 @@ public class SlitherApp extends GameApplication {
             }
         }
 
-
+        //the player is going outside the camera on the top or bottom
         if (!(player.getY() > getAppHeight() - 20 || player.getY() < -getAppHeight() + 20)) {
             if (player.getY() < 10 && player.getY() > -10) {
                 if (player.getY() < 0) {

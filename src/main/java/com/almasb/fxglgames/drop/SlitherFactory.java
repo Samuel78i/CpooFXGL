@@ -17,6 +17,9 @@ import javafx.scene.shape.Rectangle;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
+/**
+ *  This Class handles all the spawns of every entity in the game
+ */
 public class SlitherFactory implements EntityFactory {
 
     @Spawns("snake")
