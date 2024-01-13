@@ -1,4 +1,4 @@
-Slither.io version for class purpose
+Slither.io version made for Class
 
 ### Build
 
