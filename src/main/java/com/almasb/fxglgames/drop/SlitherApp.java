@@ -320,13 +320,31 @@ public class SlitherApp extends GameApplication {
             SnakeComponent snakeComponent2 = snake2.hasComponent(AIMovementComponent.class) ?
                     snake2.getComponent(AIMovementComponent.class) : snake2.getComponent(SnakeComponent.class);
 
+            int count = 0;
+            for (Entity bodyParts : snakeComponent1.getBodyPart()) {
+                if (count > 10) {
+                    spawn("food", bodyParts.getPosition());
+                }
+                count=0;
+                count++;
+            }
+            count = 0;
+            for (Entity bodyParts : snakeComponent2.getBodyPart()) {
+                if (count > 10) {
+                    spawn("food", bodyParts.getPosition());
+                }
+                count=0;
+                count++;
+            }
             snakeComponent1.death();
             snakeComponent2.death();
+
+
 
             // remove the collided food from the game
             snake2.removeFromWorld();
             snake1.removeFromWorld();
-            if(!player1.isActive()){
+            if(!player1.isActive() && !online){
                 createDialogueBoxToReplay();
             }
         });
@@ -350,7 +368,7 @@ public class SlitherApp extends GameApplication {
 
                 // remove the collided food from the game
                 entitySnake.removeFromWorld();
-                if(!player1.isActive()){
+                if(!player1.isActive() && !online){
                     createDialogueBoxToReplay();
                 }
             }
